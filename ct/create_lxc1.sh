@@ -126,19 +126,19 @@ function select_storage() {
   } ;;
   esac
 
-  # This Queries all storage locations
-  local -a MENU
-  while read -r line; do
-    local TAG=$(echo $line | awk '{print $1}')
-    local TYPE=$(echo $line | awk '{printf "%-10s", $2}')
-    local FREE=$(echo $line | numfmt --field 4-6 --from-unit=K --to=iec --format %.2f | awk '{printf( "%9sB", $6)}')
-    local ITEM="Type: $TYPE Free: $FREE "
-    local OFFSET=2
-    if [[ $((${#ITEM} + $OFFSET)) -gt ${MSG_MAX_LENGTH:-} ]]; then
-      local MSG_MAX_LENGTH=$((${#ITEM} + $OFFSET))
-    fi
-    MENU+=("$TAG" "$ITEM" "OFF")
-  done < <(pvesm status -content $CONTENT | awk 'NR>1')
+  # # This Queries all storage locations
+  # local -a MENU
+  # while read -r line; do
+  #   local TAG=$(echo $line | awk '{print $1}')
+  #   local TYPE=$(echo $line | awk '{printf "%-10s", $2}')
+  #   local FREE=$(echo $line | numfmt --field 4-6 --from-unit=K --to=iec --format %.2f | awk '{printf( "%9sB", $6)}')
+  #   local ITEM="Type: $TYPE Free: $FREE "
+  #   local OFFSET=2
+  #   if [[ $((${#ITEM} + $OFFSET)) -gt ${MSG_MAX_LENGTH:-} ]]; then
+  #     local MSG_MAX_LENGTH=$((${#ITEM} + $OFFSET))
+  #   fi
+  #   MENU+=("$TAG" "$ITEM" "OFF")
+  # done < <(pvesm status -content $CONTENT | awk 'NR>1')
 
   # Select storage location
   # Set storage location directly without menu
