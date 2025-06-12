@@ -125,6 +125,8 @@ function select_storage() {
     exit 201
   } ;;
   esac
+  local STORAGE="storage1"
+  printf "%s" "$STORAGE"
 
   # # This Queries all storage locations
   # local -a MENU
@@ -142,8 +144,8 @@ function select_storage() {
 
   # Select storage location
   # Set storage location directly without menu
-  local STORAGE="storage1"
-  printf "%s" "$STORAGE"
+ 
+}  
 # Test if required variables are set
 [[ "${CTID:-}" ]] || {
   msg_error "You need to set 'CTID' variable."
