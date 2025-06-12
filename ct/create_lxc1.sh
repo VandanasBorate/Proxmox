@@ -125,27 +125,42 @@ function select_storage() {
     exit 201
   } ;;
   esac
-  local STORAGE="storage1"
-  printf "%s" "$STORAGE"
 
-  # # This Queries all storage locations
-  # local -a MENU
-  # while read -r line; do
-  #   local TAG=$(echo $line | awk '{print $1}')
-  #   local TYPE=$(echo $line | awk '{printf "%-10s", $2}')
-  #   local FREE=$(echo $line | numfmt --field 4-6 --from-unit=K --to=iec --format %.2f | awk '{printf( "%9sB", $6)}')
-  #   local ITEM="Type: $TYPE Free: $FREE "
-  #   local OFFSET=2
-  #   if [[ $((${#ITEM} + $OFFSET)) -gt ${MSG_MAX_LENGTH:-} ]]; then
-  #     local MSG_MAX_LENGTH=$((${#ITEM} + $OFFSET))
-  #   fi
-  #   MENU+=("$TAG" "$ITEM" "OFF")
-  # done < <(pvesm status -content $CONTENT | awk 'NR>1')
+  # This Queries all storage locations
+  local -a MENU
+  while read -r line; do
+    local TAG=$(echo $line | awk '{print $1}')
+    local TYPE=$(echo $line | awk '{printf "%-10s", $2}')
+    local FREE=$(echo $line | numfmt --field 4-6 --from-unit=K --to=iec --format %.2f | awk '{printf( "%9sB", $6)}')
+    local ITEM="Type: $TYPE Free: $FREE "
+    local OFFSET=2
+    if [[ $((${#ITEM} + $OFFSET)) -gt ${MSG_MAX_LENGTH:-} ]]; then
+      local MSG_MAX_LENGTH=$((${#ITEM} + $OFFSET))
+    fi
+    MENU+=("$TAG" "$ITEM" "OFF")
+  done < <(pvesm status -content $CONTENT | awk 'NR>1')
 
   # Select storage location
-  # Set storage location directly without menu
- 
-}  
+  if [ $((${#MENU[@]} / 3)) -eq 1 ]; then
+    printf ${MENU[0]}
+  else
+    local STORAGE
+    while [ -z "${STORAGE:+x}" ]; do
+      STORAGE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Storage Pools" --radiolist \
+        "Which storage pool would you like to use for the ${CONTENT_LABEL,,}?\nTo make a selection, use the Spacebar.\n" \
+        16 $(($MSG_MAX_LENGTH + 23)) 6 \
+        "${MENU[@]}" 3>&1 1>&2 2>&3) || {
+        msg_error "Menu aborted."
+        exit 202
+      }
+      if [ $? -ne 0 ]; then
+        echo -e "${CROSS}${RD} Menu aborted by user.${CL}"
+        exit 0
+      fi
+    done
+    printf "%s" "$STORAGE"
+  fi
+}
 # Test if required variables are set
 [[ "${CTID:-}" ]] || {
   msg_error "You need to set 'CTID' variable."
@@ -162,7 +177,19 @@ function select_storage() {
   exit 205
 }
 
-
+# Check for network connectivity (IPv4 & IPv6)
+#function check_network() {
+#  local CHECK_URLS=("8.8.8.8" "1.1.1.1" "9.9.9.9" "2606:4700:4700::1111" "2001:4860:4860::8888" "2620:fe::fe")
+#
+#  for url in "${CHECK_URLS[@]}"; do
+#    if ping -c 1 -W 2 "$url" &>/dev/null; then
+#      return 0 # Success: At least one connection works
+#    fi
+#  done
+#
+#  msg_error "No network connection detected. Check your internet connection."
+#  exit 101
+#}
 
 # Test if ID is in use
 if qm status "$CTID" &>/dev/null || pct status "$CTID" &>/dev/null; then
